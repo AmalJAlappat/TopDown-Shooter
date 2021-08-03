@@ -17,31 +17,42 @@ function love.load()
 
     bullets={}
 
+    gameState=1
+    maxTime=2
+    timer=maxTime
+
+    score=0
+    highscore=0
+
+    myFont=love.graphics.newFont(30)
+
 end
 
 function love.update(dt)
 
-    if love.keyboard.isDown("d") then
-        if player.x<screenWidth then
-            player.x = player.x + player.speed*dt
+    if gameState==2 then
+        if love.keyboard.isDown("d") then
+            if player.x<screenWidth then
+                player.x = player.x + player.speed*dt
+            end
         end
-    end
 
-    if love.keyboard.isDown("a") then
-        if player.x>0 then
-            player.x = player.x - player.speed*dt
+        if love.keyboard.isDown("a") then
+            if player.x>0 then
+                player.x = player.x - player.speed*dt
+            end
         end
-    end
 
-    if love.keyboard.isDown("w") then
-        if player.y > 0 then
-            player.y = player.y - player.speed*dt
+        if love.keyboard.isDown("w") then
+            if player.y > 0 then
+                player.y = player.y - player.speed*dt
+            end
         end
-    end
 
-    if love.keyboard.isDown("s") then
-        if player.y < screenHeight then
-            player.y = player.y + player.speed*dt
+        if love.keyboard.isDown("s") then
+            if player.y < screenHeight then
+                player.y = player.y + player.speed*dt
+            end
         end
     end
 
@@ -53,18 +64,20 @@ function love.update(dt)
             for i,z in ipairs(zombies) do
                 zombies[i]=nil
             end
+
+            if highscore<score then
+                highscore=score
+            end
+
+            gameState=1
+            player.x=love.graphics.getWidth()/2
+            player.y=love.graphics.getHeight()/2
         end
     end
 
     for i,b in ipairs(bullets) do
         b.x = b.x + (math.cos(b.direction)*b.speed*dt)
         b.y = b.y + (math.sin(b.direction)*b.speed*dt)
-
-       --for i,z in ipairs(zombies) do
-           -- if distanceBetween(b.x,b.y,z.x,z.y)<30 then
-           -- zombies[i]=nil
-           -- end
-      -- end
     end
 
     for i=#bullets,1,-1 do
@@ -80,6 +93,7 @@ function love.update(dt)
             if distanceBetween(z.x,z.y,b.x,b.y)<20 then
                 z.dead=true
                 b.dead=true
+                score=score+1
             end
         end
     end
@@ -98,11 +112,24 @@ function love.update(dt)
         end
     end
 
+    if gameState==2 then
+        timer=timer-dt
+        if timer<=0 then
+            spawnZombie()
+            maxTime=0.95*maxTime
+            timer=maxTime
+            
+        end
+    end
+
 end
 
 function love.draw()
+    love.graphics.setFont(myFont)
     love.graphics.draw(sprites.background,0,0)
     love.graphics.draw(sprites.player,player.x ,player.y,playerMouseAngle(),nil,nil, sprites.player:getWidth()/2,sprites.player:getHeight()/2)
+    love.graphics.printf("score:"..score,0,love.graphics.getHeight()-100,love.graphics.getWidth(),"center")
+    love.graphics.printf("Highscore:"..highscore,0,10,love.graphics.getWidth(),"center")
 
     for i,z in ipairs(zombies) do 
         love.graphics.draw(sprites.zombie,z.x,z.y,playerZombieAngle(z),nil,nil,sprites.zombie:getWidth()/2,sprites.zombie:getHeight()/2)
@@ -113,21 +140,22 @@ function love.draw()
         love.graphics.draw(sprites.bullet,b.x,b.y,nil,1/2,1/2,sprites.bullet:getWidth()/2,sprites.bullet:getHeight()/2)
 
     end
-end
-
--- Check if space is pressed to spawn Zombie 
-function love.keypressed(key)
-    if key == "space" then
-        spawnZombie()
-    
+    if gameState==1 then
+        love.graphics.printf("Click anywhere to begin",0,50,love.graphics.getWidth(),"center")
     end
+
 end
 
 -- Check if Left mouse is clicked to spawn Bullet
 
 function love.mousepressed( x, y, button, istouch, presses )
-    if button==1 then
+    if button==1 and gameState==2 then
         spawnBullet()
+    elseif button==1 and gameState==1 then
+        gameState=2
+        maxTime=2
+        timer=maxTime
+        score=0
     end
 
 end
